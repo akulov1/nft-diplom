@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: nft-diplom-backend
+    runtime: python
+    repo: https://github.com/your-username/nft-diplom
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:///nft_marketplace.db
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+      - key: BLOCKCHAIN_RPC_URL
+        sync: false
+      - key: CONTRACT_NFT_ADDRESS
+        sync: false
+      - key: CONTRACT_MARKETPLACE_ADDRESS
+        sync: false
+      - key: PLATFORM_PRIVATE_KEY
+        sync: false
+      - key: PLATFORM_ADDRESS
+        sync: false
+
+  - type: static
+    name: nft-diplom-frontend
+    runtime: static
+    repo: https://github.com/your-username/nft-diplom
+    branch: main
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://nft-diplom-backend.onrender.com/api

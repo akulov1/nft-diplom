@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+Lib/
+Scripts/
+pyvenv.cfg
+
+# Node
+node_modules/
+*.lock
+
+# Env
+.env
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads
+backend/uploads/*
+
+# SQLite
+*.db
+
+# Contracts
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
