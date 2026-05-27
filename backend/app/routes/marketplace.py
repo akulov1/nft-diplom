@@ -3,7 +3,7 @@ from app import db
 from app.models.nft import NFT
 from app.models.listing import Listing
 from app.models.user import User
-from app.services.blockchain_service import list_nft, buy_nft, cancel_listing
+from app.services.blockchain_service import list_nft, buy_nft, cancel_listing, mint_nft
 from web3 import Web3
 
 marketplace_bp = Blueprint("marketplace", __name__)
@@ -29,6 +29,24 @@ def list_nft_for_sale():
 
     seller_address = Web3.to_checksum_address(seller_address)
     nft = NFT.query.get_or_404(nft_id)
+
+    if not nft.is_minted or nft.token_id is None:
+        if current_app.config.get("CONTRACT_NFT_ADDRESS") and current_app.config.get("PLATFORM_PRIVATE_KEY"):
+            try:
+                current_app.logger.info(f"Retroactively minting NFT {nft.id}...")
+                tx_result = mint_nft(seller_address, nft.metadata_url or nft.image_url)
+                nft.token_id = tx_result["token_id"]
+                nft.contract_address = current_app.config["CONTRACT_NFT_ADDRESS"]
+                nft.tx_hash = tx_result["tx_hash"]
+                nft.is_minted = True
+                db.session.commit()
+                current_app.logger.info(f"Mint success: token_id={tx_result['token_id']}")
+            except Exception as e:
+                current_app.logger.error(f"Retroactive mint failed: {e}", exc_info=True)
+                return jsonify({"error": f"Blockchain mint failed: {str(e)}"}), 500
+        else:
+            return jsonify({"error": "Blockchain not configured — minting unavailable"}), 500
+
     user = User.query.filter_by(wallet_address=seller_address).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
