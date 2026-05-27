@@ -5,6 +5,8 @@ from werkzeug.utils import secure_filename
 from flask import current_app
 from PIL import Image
 
+from app.services.ipfs_service import upload_file_to_ipfs, upload_json_to_ipfs
+
 def allowed_file(filename):
     ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
     return ext in current_app.config["ALLOWED_EXTENSIONS"]
@@ -24,6 +26,38 @@ def validate_image(file):
     file.seek(0)
     if size > current_app.config["MAX_CONTENT_LENGTH"]:
         raise ValueError("File too large (max 50MB)")
+
+def generate_metadata(name, description, image_cid, file_hash):
+    return {
+        "name": name,
+        "description": description,
+        "image": f"ipfs://{image_cid}",
+        "external_url": "",
+        "attributes": [],
+        "properties": {
+            "files": [{"uri": f"ipfs://{image_cid}", "type": "image"}],
+            "creators": [],
+        },
+        "file_hash": file_hash,
+    }
+
+def upload_to_ipfs(file, name, description):
+    file.seek(0)
+    file_bytes = file.read()
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
+
+    file.seek(0)
+    image_cid = upload_file_to_ipfs(file_bytes, secure_filename(file.filename))
+
+    metadata = generate_metadata(name, description, image_cid, file_hash)
+    metadata_cid = upload_json_to_ipfs(metadata)
+
+    return {
+        "image_cid": image_cid,
+        "metadata_cid": metadata_cid,
+        "metadata": metadata,
+        "file_hash": file_hash,
+    }
 
 def save_local(file):
     uploads_dir = current_app.config["UPLOAD_FOLDER"]
