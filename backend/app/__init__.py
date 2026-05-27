@@ -1,8 +1,12 @@
 import os
-from flask import Flask, send_from_directory
+import logging
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -14,6 +18,23 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     CORS(app)
+
+    @app.before_request
+    def log_request():
+        logger.debug("=" * 60)
+        logger.debug(f"REQUEST: {request.method} {request.path}")
+        logger.debug(f"HEADERS: {dict(request.headers)}")
+        if request.form:
+            logger.debug(f"FORM DATA keys: {list(request.form.keys())}")
+            logger.debug(f"FORM DATA values: {dict(request.form)}")
+        if request.files:
+            logger.debug(f"FILES keys: {list(request.files.keys())}")
+            for key in request.files:
+                f = request.files[key]
+                logger.debug(f"  FILE '{key}': name={f.filename}, content_type={f.content_type}")
+        if request.is_json:
+            logger.debug(f"JSON: {request.get_json(silent=True)}")
+        logger.debug("=" * 60)
 
     from app.routes.auth import auth_bp
     from app.routes.nft import nft_bp

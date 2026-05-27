@@ -15,7 +15,10 @@ nft_bp = Blueprint("nft", __name__)
 @nft_bp.route("/create", methods=["POST"])
 def create_nft():
     try:
+        current_app.logger.debug("=== CREATE NFT START ===")
+
         if "file" not in request.files:
+            current_app.logger.warning("No file in request.files")
             return jsonify({"error": "No file provided"}), 400
 
         file = request.files["file"]
@@ -23,16 +26,24 @@ def create_nft():
         name = request.form.get("name")
         description = request.form.get("description", "")
 
+        current_app.logger.debug(f"owner_address={owner_address}, name={name}, description={description}")
+        current_app.logger.debug(f"file={file}, filename={file.filename}")
+
         if not file or not allowed_file(file.filename):
+            current_app.logger.warning(f"Invalid file format: {file.filename}")
             return jsonify({"error": "Invalid file format"}), 400
         if not owner_address or not Web3.is_address(owner_address):
+            current_app.logger.warning(f"Invalid wallet address: {owner_address}")
             return jsonify({"error": "Invalid wallet address"}), 400
         if not name:
+            current_app.logger.warning("Name is empty")
             return jsonify({"error": "Name is required"}), 400
 
         try:
             validate_image(file)
+            current_app.logger.debug("Image validation passed")
         except ValueError as e:
+            current_app.logger.warning(f"Image validation failed: {e}")
             return jsonify({"error": str(e)}), 400
 
         owner_address = Web3.to_checksum_address(owner_address)
@@ -41,26 +52,32 @@ def create_nft():
             user = User(wallet_address=owner_address)
             db.session.add(user)
             db.session.commit()
+            current_app.logger.debug(f"Created new user {owner_address}")
 
         use_ipfs = bool(current_app.config.get("PINATA_API_KEY"))
+        current_app.logger.debug(f"use_ipfs={use_ipfs}")
 
         if use_ipfs:
             try:
+                current_app.logger.debug("Uploading to IPFS via Pinata...")
                 ipfs_result = upload_to_ipfs(file, name, description)
                 image_url = f"ipfs://{ipfs_result['image_cid']}"
                 metadata_url = f"ipfs://{ipfs_result['metadata_cid']}"
                 ipfs_cid = ipfs_result["metadata_cid"]
+                current_app.logger.debug(f"IPFS success: image_cid={ipfs_result['image_cid']}, metadata_cid={ipfs_result['metadata_cid']}")
             except Exception as e:
-                current_app.logger.error(f"IPFS upload failed, falling back to local: {e}")
+                current_app.logger.error(f"IPFS upload failed, falling back to local: {e}", exc_info=True)
                 local_result = save_local(file)
                 image_url = local_result["url"]
                 metadata_url = None
                 ipfs_cid = None
+                current_app.logger.debug(f"Saved locally: {image_url}")
         else:
             local_result = save_local(file)
             image_url = local_result["url"]
             metadata_url = None
             ipfs_cid = None
+            current_app.logger.debug(f"No IPFS configured, saved locally: {image_url}")
 
         nft_record = NFT(
             name=name,
@@ -72,18 +89,22 @@ def create_nft():
         )
         db.session.add(nft_record)
         db.session.commit()
+        current_app.logger.debug(f"NFT record saved: id={nft_record.id}")
 
         if current_app.config.get("CONTRACT_NFT_ADDRESS") and current_app.config.get("PLATFORM_PRIVATE_KEY"):
             try:
+                current_app.logger.debug("Minting on blockchain...")
                 tx_result = mint_nft(owner_address, metadata_url or image_url)
                 nft_record.token_id = tx_result["token_id"]
                 nft_record.contract_address = current_app.config["CONTRACT_NFT_ADDRESS"]
                 nft_record.tx_hash = tx_result["tx_hash"]
                 nft_record.is_minted = True
                 db.session.commit()
+                current_app.logger.debug(f"Mint success: token_id={tx_result['token_id']}")
             except Exception as e:
-                current_app.logger.error(f"Mint failed: {e}")
+                current_app.logger.error(f"Mint failed: {e}", exc_info=True)
 
+        current_app.logger.debug("=== CREATE NFT SUCCESS ===")
         return jsonify({
             "message": "NFT created",
             "nft": nft_record.to_dict(),
