@@ -1,11 +1,12 @@
 services:
   - type: web
-    name: nft-diplom-backend
+    name: nft-diplom
     runtime: python
     repo: https://github.com/akulov1/nft-diplom
     branch: master
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      cd ../frontend && npm install && npm run build && mkdir -p ../backend/frontend && cp -r dist/* ../backend/frontend/ && cd ../backend && pip install -r requirements.txt
     startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
       - key: FLASK_ENV
@@ -28,14 +29,3 @@ services:
         sync: false
       - key: PLATFORM_ADDRESS
         sync: false
-
-  - type: static_site
-    name: nft-diplom-frontend
-    repo: https://github.com/akulov1/nft-diplom
-    branch: master
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    envVars:
-      - key: VITE_API_URL
-        value: https://nft-diplom-backend.onrender.com/api
