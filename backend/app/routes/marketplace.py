@@ -112,7 +112,7 @@ def buy_listed_nft():
     if not nft:
         return jsonify({"error": "NFT not found"}), 404
 
-    if current_app.config.get("CONTRACT_MARKETPLACE_ADDRESS") and current_app.config.get("PLATFORM_PRIVATE_KEY"):
+    if listing.listing_id is not None and current_app.config.get("CONTRACT_MARKETPLACE_ADDRESS") and current_app.config.get("PLATFORM_PRIVATE_KEY"):
         try:
             tx_result = buy_nft(listing.listing_id, int(listing.price_wei))
             listing.tx_hash = tx_result["tx_hash"]
@@ -142,7 +142,7 @@ def cancel_listing_route():
     if not listing.is_active:
         return jsonify({"error": "Listing not active"}), 400
 
-    if current_app.config.get("CONTRACT_MARKETPLACE_ADDRESS") and current_app.config.get("PLATFORM_PRIVATE_KEY"):
+    if listing.listing_id is not None and current_app.config.get("CONTRACT_MARKETPLACE_ADDRESS") and current_app.config.get("PLATFORM_PRIVATE_KEY"):
         try:
             tx_result = cancel_listing(listing.listing_id)
             listing.tx_hash = tx_result["tx_hash"]
