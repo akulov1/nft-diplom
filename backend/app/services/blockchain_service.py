@@ -56,7 +56,7 @@ def mint_nft(to_address, token_uri):
     })
 
     signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     logs = contract.events.TokenCreated().process_receipt(receipt)
@@ -87,7 +87,7 @@ def list_nft(token_id, price_wei):
     })
 
     signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     logs = contract.events.TokenListed().process_receipt(receipt)
@@ -117,7 +117,7 @@ def buy_nft(listing_id, price_wei):
     })
 
     signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     return {
@@ -143,7 +143,7 @@ def cancel_listing(listing_id):
     })
 
     signed = account.sign_transaction(tx)
-    tx_hash = w3.eth.send_raw_transaction(signed.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
 
     return {
