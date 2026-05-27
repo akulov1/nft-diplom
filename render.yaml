@@ -2,8 +2,8 @@ services:
   - type: web
     name: nft-diplom-backend
     runtime: python
-    repo: https://github.com/your-username/nft-diplom
-    branch: main
+    repo: https://github.com/akulov1/nft-diplom
+    branch: master
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
@@ -29,11 +29,10 @@ services:
       - key: PLATFORM_ADDRESS
         sync: false
 
-  - type: static
+  - type: static_site
     name: nft-diplom-frontend
-    runtime: static
-    repo: https://github.com/your-username/nft-diplom
-    branch: main
+    repo: https://github.com/akulov1/nft-diplom
+    branch: master
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
