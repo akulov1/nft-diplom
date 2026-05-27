@@ -50,9 +50,9 @@ def mint_nft(to_address, token_uri):
         token_uri,
     ).build_transaction({
         "from": account.address,
-        "nonce": w3.eth.get_transaction_count(account.address),
+        "nonce": w3.eth.get_transaction_count(account.address, "pending"),
         "gas": 300000,
-        "gasPrice": w3.eth.gas_price,
+        "gasPrice": max(w3.eth.gas_price, w3.eth.gas_price * 11 // 10),
     })
 
     signed = account.sign_transaction(tx)
@@ -81,9 +81,9 @@ def list_nft(token_id, price_wei):
         price_wei,
     ).build_transaction({
         "from": account.address,
-        "nonce": w3.eth.get_transaction_count(account.address),
+        "nonce": w3.eth.get_transaction_count(account.address, "pending"),
         "gas": 200000,
-        "gasPrice": w3.eth.gas_price,
+        "gasPrice": max(w3.eth.gas_price, w3.eth.gas_price * 11 // 10),
     })
 
     signed = account.sign_transaction(tx)
@@ -110,9 +110,9 @@ def buy_nft(listing_id, price_wei):
         listing_id,
     ).build_transaction({
         "from": account.address,
-        "nonce": w3.eth.get_transaction_count(account.address),
+        "nonce": w3.eth.get_transaction_count(account.address, "pending"),
         "gas": 200000,
-        "gasPrice": w3.eth.gas_price,
+        "gasPrice": max(w3.eth.gas_price, w3.eth.gas_price * 11 // 10),
         "value": price_wei,
     })
 
