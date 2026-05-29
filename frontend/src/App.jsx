@@ -46,7 +46,7 @@ export default function App() {
 const styles = StyleSheet.create({
   app: {
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#060b18',
   },
   content: {
     flex: 1,
